@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<!-- Based on https://www.khanacademy.org/computer-programming/processingjs-inside-webpages-template/5157014494511104 -->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>Prosta animacja</title>
+</head>
+<body>
+	<!-- Element Canvas (ang. p³ótno), na którym bêdziemy rysowaæ. -->
+  <canvas id="mycanvas" width="400" height="400"></canvas>
+
+  <!-- Importujemy bibliotekê processing.js, s³u¿¹c¹ do rysowania. -->
+  <script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script>
+  <!--  zapewnia dostêp do wywo³ania screen.log -->
+  <script src="logowanie.js"></script>
+  <!-- A teraz w³aœciwy program. -->
+  <script src="gra.js"></script>
+
+  <script>
+    // Pobieramy element Canvas, na którym bêdziemy rysowaæ.
+    var canvas = document.getElementById("mycanvas");
+    // zmienne globalne wykorzystywane w rysowaniu
+
+    /** Uruchom/wstrzymaj ruch kulki przez naciœniêcie myszki lub spacji. */
+    var URUCHOMIONE = false;
+    
+    /** Rozpocznijmy now¹ grê! */
+    nowaGra();
+    
+    // Tworzymy obrazek lub animacjê przy pomocy funkcji przygotujPlotno() z pliku rysowanie.js.
+    new Processing(canvas, function(pic){
+      pic.size(maxX, maxY);
+    
+      // Obs³uga naciskania klawiszy.
+      document.body.onkeydown = function(event) {
+        if (event.keyCode == 32) {
+          // wciœniêto spacjê
+          URUCHOMIONE = !URUCHOMIONE;
+        }
+        if (event.key == 'r') {
+          // reset gry
+          nowaGra(0, 0, 1, 96);
+          URUCHOMIONE = true;
+        }
+        // Jesli ktos nacisnal cyfre, wywolajmy specjalna funkcje przygotowana dla Ciebie:
+        wcisnietoCyfreN(event.key);
+        // Dla ka¿dego gracza spradzamy czy nacisnê³a ona/on klawisz w górê/dó³.
+        for (var i = 0; i < gracze.length; i++) {
+          gracz = gracze[i];
+          if (event.key == gracz.klawiszWDol) {
+            gracz.rusza_sie_w_dol = true;
+          } else if (event.key == gracz.klawiszWGore) {
+            gracz.rusza_sie_w_gore = true;
+          }
+          gracze[i] = gracz;
+        }
+      };
+      // Obs³uga "ouszczania" klawiszy.
+      document.body.onkeyup = function(event) {
+        for (var i = 0; i < gracze.length; i++) {
+          gracz = gracze[i];
+          if (event.key == gracz.klawiszWDol) {
+            gracz.rusza_sie_w_dol = false;
+          } else if (event.key == gracz.klawiszWGore) {
+            gracz.rusza_sie_w_gore = false;
+          }
+          gracze[i] = gracz;
+        }
+      }
+      // Pauzujmy/wznawiajmy grê tak¿e po naciœniêciu myszki.
+      window.onclick = function() {
+        URUCHOMIONE = !URUCHOMIONE;
+      }
+      
+      // Funkcja uruchamiana w nieskoñczonej pêtli, licz¹ca gdzie obecnie s¹ pi³eczki
+      // i gracze i rysuj¹ca plaszê w ka¿dym obrocie.
+      pic.draw = function() {
+        if (!URUCHOMIONE) {
+          // Jeœli gra jest zapauzowana nie robimy nic.
+          return;
+        }
+        // Czyœcimy planszê
+        pic.background(200, 200, 200);
+        pic.fill(255, 255, 0);
+        
+        // Dla ka¿dej pi³eczki wyliczamy jej now¹ pozycjê i ewentualnie, jeœli wysz³a
+        // poza planszê, oznaczamy j¹ jako nieaktywn¹. Nie rysujemy nieaktywnych pi³eczek.
+        for (var i = 0; i < pileczki.length; i++) {
+          pileczka = pileczki[i];
+          pileczka.aktualizujPozycje();
+          if (pileczka.aktywna) {
+            pic.ellipse(pileczka.x, pileczka.y, pileczka.srednicaPilki, pileczka.srednicaPilki);
+          }
+        }
+        
+        // Wyliczamy nowe pozycje graczy, w zale¿noœci od tego jakie naciskali klawisze (dó³/góra/nic).
+        // Rysujemy prostok¹ty odpowiadaj¹ce graczom.
+        for (var i = 0; i < gracze.length; i++) {
+          gracz = gracze[i];
+          gracz.aktualizujPozycje();
+          pic.rect(gracz.x, gracz.y, gracz.szerokosc, gracz.dlugosc);
+        }
+        // Wypiszmy zaktualizowany stan gry.
+        pic.text(stanGry(), 24, 20);
+      };
+    });
+  </script>
+
+</body>
+</html>
