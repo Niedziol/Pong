@@ -1,56 +1,54 @@
 /**
- * Po ka¿dym odbiciu kulka troszkê przyspiesza, tak ¿eby gra by³a coraz bardziej dynamiczna ale ¿eby nie koñczy³a siê zbyt szybko
- * Paletka jest podzielona na 8 czêœci gdzie skrajne odbijaj¹ o najwiêkszy k¹t, a im bardziej do œrodka tym mniej tak jak na rysunku w poleceniu
- * Wciœniêcie r rozpoczyna grê i powoduje te¿ swoisty force reset który zeruje wszystkie ustawienia
- * Przyciski od 1 - 3 zwiêkszaj¹ liczbê graczy oraz pi³ek
- * Przyciski od 4 - 6 zwiêkszaj¹ poziom trudnoœci (kulki lec¹ z wyjœciow¹ wiêksz¹ prêdkoœci¹, paletki s¹ wê¿sze)
- * Przycisk 7 powoduje "wrzucenie" na planszê nowych pi³ek z zachowaniem aktualnych wyników i ustawieñ dot. liczby graczy i poziomu trudnoœci
- * Zastanawia³em siê nad implementacj¹ dynamicznego wrzucania nowych kulek (czyli np mamy 3 kulki na planszy 1 zostanie wbita to natychmiast pojawia siê nowa, tak aby na planszy by³y zawsze 3 kulki), ale uzna³em ¿e zostawienie tego w taki sposób jest ciekawsze bo pocz¹tek gry jest trudny ze wzglêdu na iloœæ kulek a koniec rundy jest trudny ze wzglêdu na coraz wiêksz¹ prêdkosæ mniejszej iloœci kulek.
- * Nie wiem w jaki sposób sprawdzacie program, czy zczytujecie wszystkie pliki nam dostêpne, czy tylko gra.js i "wstawiacie" to w swój szablon, ale po klikniêciu przycisku r grê nale¿y wywo³aæ nowaGra(0, 0, 1, 96); co te¿ zmieni³em w index.html
+ * Po kaÅ¼dym odbiciu kulka troszkÄ™ przyspiesza, tak Å¼eby gra byÅ‚a coraz bardziej dynamiczna ale Å¼eby nie koÅ„czyÅ‚a siÄ™ zbyt szybko
+ * Paletka jest podzielona na 8 czÄ™Å›ci gdzie skrajne odbijajÄ… o najwiÄ™kszy kÄ…t, a im bardziej do Å›rodka tym mniej tak jak na rysunku w poleceniu
+ * WciÅ›niÄ™cie r rozpoczyna grÄ™ i powoduje teÅ¼ swoisty force reset ktÃ³ry zeruje wszystkie ustawienia
+ * Przyciski od 1 - 3 zwiÄ™kszajÄ… liczbÄ™ graczy oraz piÅ‚ek
+ * Przyciski od 4 - 6 zwiÄ™kszajÄ… poziom trudnoÅ›ci (kulki lecÄ… z wyjÅ›ciowÄ… wiÄ™kszÄ… prÄ™dkoÅ›ciÄ…, paletki sÄ… wÄ™Å¼sze)
+ * Przycisk 7 powoduje "wrzucenie" na planszÄ™ nowych piÅ‚ek z zachowaniem aktualnych wynikÃ³w i ustawieÅ„ dot. liczby graczy i poziomu trudnoÅ›ci
  * */
 
 
 
 
-/** Maksymalny rozmiar planszy (w pikslach), od lewej do prawej. Wartoœæ najwiêksza jest po prawej stronie. */
+/** Maksymalny rozmiar planszy (w pikslach), od lewej do prawej. WartoÅ›Ä‡ najwiÄ™ksza jest po prawej stronie. */
 var maxX = 800;
-/** Maksymalny rozmiar planszy (w pikslach), od góry do do³u. Wartoœæ najwiêksza jest u do³u. */
+/** Maksymalny rozmiar planszy (w pikslach), od gÃ³ry do doÅ‚u. WartoÅ›Ä‡ najwiÄ™ksza jest u doÅ‚u. */
 var maxY = 400;
-/** Szerokoœæ marginesu (wp³ywa na to, jak rysujemy prostok¹ty i jak dalego od brzegu odbijaj¹ siê pi³ki) */
+/** SzerokoÅ›Ä‡ marginesu (wpÅ‚ywa na to, jak rysujemy prostokÄ…ty i jak dalego od brzegu odbijajÄ… siÄ™ piÅ‚ki) */
 var margines = 20;
 
 
 /**    
-Struktura danych opisuj¹ca pojedynczego gracza. Dla gracza pamiêtamy
+Struktura danych opisujÄ…ca pojedynczego gracza. Dla gracza pamiÄ™tamy
 - czy jest prawy czy lewy
-- jego wspó³rzêdn¹ x-ow¹ (lew¹)
-- jego wspó³rzêdny¹ y-rekow¹ (górn¹)
-- d³ugoœæ (jak daleko w dó³ siêga prostok¹t)
-- szerokoœæ (jak daleko w bok siêga prostok¹t. nie wp³ywa na logikê gry)
-- prêdkoœæ z jak¹ przesuwa siê prostok¹t przy naciskaniu przycisków góra/dó³
-- czy aktualnie naciœniêty przycisk góra (rusza_sie_w_gore) lub dó³ (rusza_sie_w_dol)
-- klawisze u¿ywane do przesuwania w górê/dó³.
+- jego wspÃ³Å‚rzÄ™dnÄ… x-owÄ… (lewÄ…)
+- jego wspÃ³Å‚rzÄ™dnyÄ… y-rekowÄ… (gÃ³rnÄ…)
+- dÅ‚ugoÅ›Ä‡ (jak daleko w dÃ³Å‚ siÄ™ga prostokÄ…t)
+- szerokoÅ›Ä‡ (jak daleko w bok siÄ™ga prostokÄ…t. nie wpÅ‚ywa na logikÄ™ gry)
+- prÄ™dkoÅ›Ä‡ z jakÄ… przesuwa siÄ™ prostokÄ…t przy naciskaniu przyciskÃ³w gÃ³ra/dÃ³Å‚
+- czy aktualnie naciÅ›niÄ™ty przycisk gÃ³ra (rusza_sie_w_gore) lub dÃ³Å‚ (rusza_sie_w_dol)
+- klawisze uÅ¼ywane do przesuwania w gÃ³rÄ™/dÃ³Å‚.
 
-Funkcja aktualizujPozycje() przesuwa prostok¹t na dó³/w górê lub pozostawia go w starym
-miejscu, w zale¿noœci od naciœniêtego przycisku i faktu, czy gracz by³ ju¿ na brzego planszy
+Funkcja aktualizujPozycje() przesuwa prostokÄ…t na dÃ³Å‚/w gÃ³rÄ™ lub pozostawia go w starym
+miejscu, w zaleÅ¼noÅ›ci od naciÅ›niÄ™tego przycisku i faktu, czy gracz byÅ‚ juÅ¼ na brzego planszy
 (nie wychodzimy poza brzeg).
 */
 function nowyGracz(LlubP, klawiszWGore, klawiszWDol, dlugosc) {
   return  {
-    /** W polach któryGracz, x, y, dlugosc itd. zapamiêtujemy stan gracza (prostok¹ta). */
+    /** W polach ktÃ³ryGracz, x, y, dlugosc itd. zapamiÄ™tujemy stan gracza (prostokÄ…ta). */
     ktoryGracz: LlubP,
     x: LlubP === "L" ? 4 : maxX - margines,
     y: maxY/2,
     dlugosc: dlugosc,
     szerokosc: 16,
     predkosc: 8,
-    rusza_sie_w_gore: false, // pole na którym zapiszemy 'true' po naciœniêciu 
-                             // klawisza 'w górê' dla tego gracza
-    rusza_sie_w_dol: false,  // analogiczne pole dla klawisa 'w dó³'
+    rusza_sie_w_gore: false, // pole na ktÃ³rym zapiszemy 'true' po naciÅ›niÄ™ciu 
+                             // klawisza 'w gÃ³rÄ™' dla tego gracza
+    rusza_sie_w_dol: false,  // analogiczne pole dla klawisa 'w dÃ³Å‚'
     klawiszWDol: klawiszWDol,
     klawiszWGore: klawiszWGore,
     
-    /** Funkcja dotycz¹ce tego obiektu (tak zwana "metoda") aktualizuj¹ca pozycjê gracza */
+    /** Funkcja dotyczÄ…ce tego obiektu (tak zwana "metoda") aktualizujÄ…ca pozycjÄ™ gracza */
     aktualizujPozycje: function () {
       if (this.rusza_sie_w_dol && this.y < maxY - this.dlugosc) {
         this.y += this.predkosc;
@@ -62,49 +60,49 @@ function nowyGracz(LlubP, klawiszWGore, klawiszWDol, dlugosc) {
 }
 
 /**
- * Funkcja tworz¹ca now¹ pi³kê. Dla pi³ki pamiêtamy
- * - jej wspó³rzêdne x i y (poziom¹ i pionow¹)
- * - prêdkoœæ z jak¹ ostatnio porusza³a siê w poziomie (na boki, predkosc_x) i w pionie (góra/dó³ predkosc_y)
- * - œrednicê pi³ki (u¿ywane tylko do rysowania mniejszych/wiekszych pilek)
+ * Funkcja tworzÄ…ca nowÄ… piÅ‚kÄ™. Dla piÅ‚ki pamiÄ™tamy
+ * - jej wspÃ³Å‚rzÄ™dne x i y (poziomÄ… i pionowÄ…)
+ * - prÄ™dkoÅ›Ä‡ z jakÄ… ostatnio poruszaÅ‚a siÄ™ w poziomie (na boki, predkosc_x) i w pionie (gÃ³ra/dÃ³Å‚ predkosc_y)
+ * - Å›rednicÄ™ piÅ‚ki (uÅ¼ywane tylko do rysowania mniejszych/wiekszych pilek)
  * - zmienna 'aktywa', ustawiona na 'true' jesli pilka jest ciagle w grze i na 'false', jesli
  *   wyszla juz poza plansze.
  * 
- * Definiujemy te¿ funkcjê 'aktualizujPozycje' pi³ki, która zmienia jej po³o¿enie w zale¿noœci
- * od poprzedniego po³o¿enia i prêdkoœci.
+ * Definiujemy teÅ¼ funkcjÄ™ 'aktualizujPozycje' piÅ‚ki, ktÃ³ra zmienia jej poÅ‚oÅ¼enie w zaleÅ¼noÅ›ci
+ * od poprzedniego poÅ‚oÅ¼enia i prÄ™dkoÅ›ci.
  */
 function nowaPilka(x, y, maksymalnaPredkosc_x, srednicaPilki) {
   return {
-    /** W polach x, y, predkosc_x itd. zapamiêtujemy stan pi³ki */
+    /** W polach x, y, predkosc_x itd. zapamiÄ™tujemy stan piÅ‚ki */
     x: x,
     y: y,
     predkosc_x: losowaPredkoscWLosowymKierunku(1) * 7 /** -7 lub +7 */,
-    predkosc_y: losowaPredkoscWLosowymKierunku(7) /** Losowa liczba od -7 do +7 oprócz 0 */,
+    predkosc_y: losowaPredkoscWLosowymKierunku(7) /** Losowa liczba od -7 do +7 oprÃ³cz 0 */,
     srednicaPilki: srednicaPilki,
     aktywna: true,
    
     
-    /** Funkcja dotycz¹ce tego obiektu (tak zwana "metoda") aktualizuj¹ca pozycjê pi³ki */
+    /** Funkcja dotyczÄ…ce tego obiektu (tak zwana "metoda") aktualizujÄ…ca pozycjÄ™ piÅ‚ki */
     aktualizujPozycje: function () {
-      /**przyspieszenia y i x odpowiadaj¹ za przyspieszenie w kierunkach odpowiednio pionowym i poziomym*/
-      /**maj¹ powoli coraz bardziej zwiêkszaæ prêdkoœæ pi³ki ¿eby z ka¿d¹ sekund¹ gra stawa³a siê coraz trudniejsza*/
+      /**przyspieszenia y i x odpowiadajÄ… za przyspieszenie w kierunkach odpowiednio pionowym i poziomym*/
+      /**majÄ… powoli coraz bardziej zwiÄ™kszaÄ‡ prÄ™dkoÅ›Ä‡ piÅ‚ki Å¼eby z kaÅ¼dÄ… sekundÄ… gra stawaÅ‚a siÄ™ coraz trudniejsza*/
       if (!this.aktywna) {
-        // Jeœli pi³ka wysz³a ju¿ poza planszê nic z ni¹ nie robimy.
+        // JeÅ›li piÅ‚ka wyszÅ‚a juÅ¼ poza planszÄ™ nic z niÄ… nie robimy.
         return;
       }
-      // Odbijanie pi³ki od sufitu/pod³ogi:
+      // Odbijanie piÅ‚ki od sufitu/podÅ‚ogi:
       if (this.y > maxY-margines && this.predkosc_y > 0 || this.y < margines && this.predkosc_y < 0) {
         this.predkosc_y *= -1;
       }
       var k;
-      // i przesuwamy pi³kê w pionie:
+      // i przesuwamy piÅ‚kÄ™ w pionie:
       this.y += this.predkosc_y;
       //this.predkosc_y += przyspieszenie_y;
-      // Dojœcie do lewego/prawego boku. Jeœli na odpowiedniej wysokoœci znajduje siê
-      // prostok¹t gracza, pi³ka odbije siê w drug¹ stronê, w przeciwnym wypadku
-      // wyjdzie poza plansze i stanie siê "nieaktywna".
+      // DojÅ›cie do lewego/prawego boku. JeÅ›li na odpowiedniej wysokoÅ›ci znajduje siÄ™
+      // prostokÄ…t gracza, piÅ‚ka odbije siÄ™ w drugÄ… stronÄ™, w przeciwnym wypadku
+      // wyjdzie poza plansze i stanie siÄ™ "nieaktywna".
       if (this.x > maxX-margines && this.predkosc_x > 0) { // prawy bok
         this.predkosc_x *= -1.1;
-        // Jesli nie istnieje prawy ("P") gracz taki, ze pileczka przecina sie z rakietk¹ tego
+        // Jesli nie istnieje prawy ("P") gracz taki, ze pileczka przecina sie z rakietkÄ… tego
         // gracza (this.y lezy powyzej poczatku 'y' i ponizej konca rakietki 'y-dlugosc') wtedy
         // pozbywamy sie pileczki ustawiajac:
         if (czyWeWspolrzednejYJestJakisGracz("P", this.y) === false) {
@@ -128,17 +126,17 @@ function nowaPilka(x, y, maksymalnaPredkosc_x, srednicaPilki) {
           this.predkosc_y = this.predkosc_x * k;
         }
       }
-      // i przesuwamy pi³kê w poziomie:
+      // i przesuwamy piÅ‚kÄ™ w poziomie:
       this.x += this.predkosc_x;
     }
   };
 }
 
-// Lista graczy i lista pi³eczek. Wszystkie zmienne inicjalizujemy w funkcji 'nowaGra',
-// która wo³ana jest na pocz¹tku gry oraz po ka¿dym naciœniêciu klawisza 'r' (reset).
+// Lista graczy i lista piÅ‚eczek. Wszystkie zmienne inicjalizujemy w funkcji 'nowaGra',
+// ktÃ³ra woÅ‚ana jest na poczÄ…tku gry oraz po kaÅ¼dym naciÅ›niÄ™ciu klawisza 'r' (reset).
 var gracze = [];
 var pileczki = [];
-// Ile pi³eczek wygra³ ju¿ gracz lewy/prawy
+// Ile piÅ‚eczek wygraÅ‚ juÅ¼ gracz lewy/prawy
 var wygraneGraczaLewego;
 var wygraneGraczaPrawego;
 var szerokosc_paletek;
@@ -148,18 +146,16 @@ function stanGry() {
   return "LEWY: " + wygraneGraczaLewego + "  VS  PRAWY: " + wygraneGraczaPrawego;
 }
 
-// Funkcja inicjalizuj¹ca now¹ grê.
+// Funkcja inicjalizujÄ…ca nowÄ… grÄ™.
 function nowaGra(winl, winr, ile, szerokosc_p) {
   szerokosc_paletek = szerokosc_p;
   ile_paletek = ile;
   wygraneGraczaLewego = winl;
   wygraneGraczaPrawego = winr;
-  // Dla ka¿dego gracza podajemy:
+  // Dla kaÅ¼dego gracza podajemy:
   // - czy jest on lewy czy prawy (L/P)
-  // - przyciski góra/dó³ u¿ywane przez tego gracza.
-  // - d³ugoœæ prostok¹ta tego gracza.
-  // U¿ywamy dwóch graczy, ale Ty mo¿esz u¿yæ wiêcej, np. odkomentowuj¹c 
-  // œrodkowy wpis w tablicy 'gracze'.
+  // - przyciski gÃ³ra/dÃ³Å‚ uÅ¼ywane przez tego gracza.
+  // - dÅ‚ugoÅ›Ä‡ prostokÄ…ta tego gracza.
   if(ile == 1){
     gracze = [
       nowyGracz("L", 'a', 'z', szerokosc_paletek),
@@ -195,18 +191,16 @@ function nowaGra(winl, winr, ile, szerokosc_p) {
     nowaPilka(maxX/2, maxY/2, 7, 15)];
   }
     
-  // Dla ka¿dej pi³eczki podajemy
-  // - jej startowe wspó³rzêdne X i Y
-  // - maksymaln¹ prêdkoœc z jak¹ siê ona porusza. funkcja nowaPilka wylosuje Wartoœæ
-  //   od 0 do tej maksymalnej prêdkoœci (poni¿ej u¿ywamy maksymalnej predkosci 7)
-  // - œrednica pi³eczki, przydatna (³atwiej siê ogl¹da) kiedy u¿ywamy wiêcej ni¿ jednej.
-  // Jeœli chcesz u¿yæ wiêcej ni¿ jednej pi³eczki, mo¿esz np. odkomentowaæ pierwsze dwa
-  // elementy tablicy poni¿ej.
+  // Dla kaÅ¼dej piÅ‚eczki podajemy
+  // - jej startowe wspÃ³Å‚rzÄ™dne X i Y
+  // - maksymalnÄ… prÄ™dkoÅ›c z jakÄ… siÄ™ ona porusza. funkcja nowaPilka wylosuje WartoÅ›Ä‡
+  //   od 0 do tej maksymalnej prÄ™dkoÅ›ci (poniÅ¼ej uÅ¼ywamy maksymalnej predkosci 7)
+  // - Å›rednica piÅ‚eczki, przydatna (Å‚atwiej siÄ™ oglÄ…da) kiedy uÅ¼ywamy wiÄ™cej niÅ¼ jednej
 
 }
 
-/** Funkcja sprawdza, czy we wspó³rzêdnej 'y' jest jakiœ gracz lewy (jeœli LlubP == 'L')
- * lub prawy (jeœli LlubP == 'P') */
+/** Funkcja sprawdza, czy we wspÃ³Å‚rzÄ™dnej 'y' jest jakiÅ› gracz lewy (jeÅ›li LlubP == 'L')
+ * lub prawy (jeÅ›li LlubP == 'P') */
 function czyWeWspolrzednejYJestJakisGracz(LlubP, y) {
   for (var i = 0; i < gracze.length; i++) {
     gracz = gracze[i];
@@ -224,27 +218,21 @@ function czyWeWspolrzednejYJestJakisGracz(LlubP, y) {
       else return k;
     }
   }
-  wypiszNaEkran("Pi³ka wypad³a po strone " + LlubP + " na wysokoœci " + y);
+  wypiszNaEkran("PiÅ‚ka wypadÅ‚a po strone " + LlubP + " na wysokoÅ›ci " + y);
   return false;
 }
 
-/**
- * Jesli chcesz dodac jakas fajna funkcjonalnosc, mozesz wykorzystac funkcje ponizej. 
- * Po nacisniecu cyfry N (od 0 do 9) wywola sie wybrana przez Ciebie funkcja. O, my 
- * na przyklad po wcisniêciu cyfry '7' restartujemy gre (nigdzie indziej o tym nie
- * powiedzielismy - ha!).
- */
 function wcisnietoCyfreN(N) {
   if (N === '0') {
   } else if (N === '1') {
-    nowaGra(wygraneGraczaLewego, wygraneGraczaPrawego, 1, szerokosc_paletek);//od 1 - 3 zmiana liczby graczy (a wiêc i kulek)
+    nowaGra(wygraneGraczaLewego, wygraneGraczaPrawego, 1, szerokosc_paletek);//od 1 - 3 zmiana liczby graczy (a wiÄ™c i kulek)
   } else if (N === '2') {
     nowaGra(wygraneGraczaLewego, wygraneGraczaPrawego, 2, szerokosc_paletek);
   } else if(N === '3') {
     nowaGra(wygraneGraczaLewego, wygraneGraczaPrawego, 3, szerokosc_paletek);
   } else if(N === '4'){
     mnoznik = 0.5;
-    nowaGra(wygraneGraczaLewego, wygraneGraczaPrawego, ile_paletek, 96); //od 4 - 6 zmiana poziomu trudnoœci
+    nowaGra(wygraneGraczaLewego, wygraneGraczaPrawego, ile_paletek, 96); //od 4 - 6 zmiana poziomu trudnoÅ›ci
   } else if(N === '5'){
     mnoznik = 0.8;
     nowaGra(wygraneGraczaLewego, wygraneGraczaPrawego, ile_paletek, 80);
@@ -252,12 +240,9 @@ function wcisnietoCyfreN(N) {
     mnoznik = 1.2;
     nowaGra(wygraneGraczaLewego, wygraneGraczaPrawego, ile_paletek, 64);
   } else if (N === '7') {
-    nowaGra(wygraneGraczaLewego, wygraneGraczaPrawego, ile_paletek, szerokosc_paletek); //restart gry bez zmiany poprzednich ustawieñ
+    nowaGra(wygraneGraczaLewego, wygraneGraczaPrawego, ile_paletek, szerokosc_paletek); //restart gry bez zmiany poprzednich ustawieÅ„
   } // ...
 }
-
-/** Funkcja zwraca losow¹ wartoœæ od -maksymalnaPredkosc do +maksymalnaPredkosc z 
- * pominiêciem zera. Nie przejmuj siê, jeœli nie rozumiesz do koñca co tu siê dzieje */
 function losowaPredkoscWLosowymKierunku(maksymalnaPredkosc) {
   wynik = Math.round((Math.random() * 2 * maksymalnaPredkosc) - maksymalnaPredkosc);
   if (wynik === 0) {
